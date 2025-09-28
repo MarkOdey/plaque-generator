@@ -9,11 +9,11 @@
 </template>
 
 <script setup>
-  import vectorizeText from 'vectorize-text'
 
   import { ref } from 'vue'
 
-  import { useAppStore } from '../stores/app'
+  import { Vector } from '../helpers/vector-helper'
+import { useAppStore } from '../stores/app'
 
   let app = useAppStore()
 
@@ -29,26 +29,19 @@
     render()
   }, { immediate: true })
 
-  function render () {
-    let graph = vectorizeText(text.value, {
-      width: 500,
-      textBaseline: 'hanging',
-      size: 208,
-      font: font.value,
-    })
-
+  async function render () {
     const color = '#FFFFFF'
 
     let svg = ['<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  width="800"  height="200" >']
 
-    console.log(graph)
-    for (const e of graph.edges) {
-      let p0 = graph.positions[e[0]]
-      let p1 = graph.positions[e[1]]
-      svg.push('<line x1="' + p0[0] + '" y1="' + p0[1]
-        + '" x2="' + p1[0] + '" y2="' + p1[1]
-        + `" stroke-width="1" stroke="${color}" />`)
+    const vector = new Vector(text.value, { font: font.value })
+
+
+    for (const line of vector.polyline) {
+
+      svg.push(`<line x1="${line.start.x}" y1="${line.start.y}" x2="${line.end.x}" y2="${line.end.y}" stroke-width="1" stroke="${color}" />`)
     }
+
     svg.push('</svg>')
 
     svgHtml.value = svg.join('')
