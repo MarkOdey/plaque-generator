@@ -1,12 +1,13 @@
 // Utilities
-import { defineStore } from "pinia";
+import { defineStore } from 'pinia'
 
-export const useAppStore = defineStore("app", {
+export const useAppStore = defineStore('app', {
   state: () => ({
-    text: "hello world",
-    font: "pacifico",
+    text: 'hello world',
+    font: 'pacifico',
+    fontSize: 100,
 
-    fontList: ["sans-serif", "pacifico", "Caveat Variable"],
+    fontList: ['sans-serif', 'pacifico', 'Caveat Variable'],
     //
   }),
-});
+})

@@ -1,13 +1,23 @@
 import vectorizeText from 'vectorize-text'
 
 export class Vector {
-  text = null
+  text = ''
+  fontSize = 100
   font = 'sans-serif'
+
   graph = null
 
   shapes = []
   lines = []
-  polyline = []
+  get polyline() {
+    let lines = []
+
+    this.shapes.forEach((shape) => {
+      lines = lines.concat(shape.polyline)
+    })
+
+    return lines
+  }
 
   constructor(text, params = {}) {
     this.text = text
@@ -16,18 +26,23 @@ export class Vector {
       this.font = params.font
     }
 
+    if (params.fontSize) {
+      this.fontSize = params.fontSize
+    }
+
     this.graph = vectorizeText(this.text, {
-      width: 500,
+      width: this.text.length * this.fontSize,
+      height: this.fontSize,
       textBaseline: 'hanging',
-      size: 208,
+      // size: this.fontSize,
       font: this.font,
     })
-
-    console.log(this.graph)
 
     this.parseLines()
 
     this.parsePolyline()
+
+    console.log(this.shapes)
   }
 
   parseLines() {
@@ -46,22 +61,36 @@ export class Vector {
   parsePolyline() {
     const polyline = []
 
+    let shape = new Shape()
+
+    // this.shapes.push(shape)
+
     const parsedLines = 0
 
     let index = 0
+
+    if (this.lines.length === 0) {
+      return
+    }
 
     const initialLine = this.lines[index]
 
     let currentLine = initialLine
 
-    polyline.push(currentLine)
+    // polyline.push(currentLine)
+
+    shape.addLine(currentLine)
 
     // Find next line
 
-    while (polyline.length != this.lines.length) {
+    while (!this.allLinesBelongsToAShape()) {
       let nextLine = null
 
       this.lines.forEach((line, index) => {
+        if (line.shape) {
+          return
+        }
+
         if (currentLine !== line && currentLine.end.equal(line.end)) {
           line.swapStartEnd()
           nextLine = line
@@ -76,20 +105,43 @@ export class Vector {
 
       if (nextLine) {
         currentLine = nextLine
-        polyline.push(nextLine)
+        // polyline.push(nextLine)
+
+        shape.addLine(nextLine)
 
         nextLine = null
       } else {
-        break
+        currentLine = this.findLineWithNoShape()
+
+        this.shapes.push(shape)
+
+        shape = new Shape()
+
+        shape.addLine(currentLine)
       }
     }
 
-    this.polyline = polyline
+    this.shapes.push(shape)
+
+    // this.polyline = polyline
+  }
+
+  findLineWithNoShape() {
+    return this.lines.find((line) => {
+      return !line.shape
+    })
+  }
+
+  allLinesBelongsToAShape() {
+    return this.lines.every((line) => {
+      return !!line.shape
+    })
   }
   parseShapes() {}
 }
 
 export class Line {
+  shape = null
   start = null
   end = null
   constructor(start, end) {
@@ -116,5 +168,17 @@ export class Point {
 
   equal(point) {
     return this.x === point.x && this.y === point.y
+  }
+}
+
+export class Shape {
+  polyline = []
+
+  constructor() {}
+
+  addLine(line) {
+    line.shape = this
+
+    this.polyline.push(line)
   }
 }
