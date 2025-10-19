@@ -1,122 +1,122 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Polygon Inside Check</title>
-  <style>
-    canvas {
-      border: 1px solid #ccc;
-      background-color: #f9f9f9;
-    }
-    #status {
-      font-family: sans-serif;
-      margin-top: 10px;
-    }
-  </style>
-</head>
-<body>
-  <canvas id="canvas" width="600" height="600"></canvas>
-  <div id="status"></div>
-
-  <script>
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
-
-    // Define Polygon B (outer)
-    const polygonB = [
-      [100, 100],
-      [500, 100],
-      [500, 500],
-      [100, 500],
-    ];
-
-    // Define Polygon A (inner)
-    const polygonA = [
-      [200, 200],
-      [400, 200],
-      [400, 400],
-      [200, 400],
-    ];
-
-    // Ray casting point-in-polygon
-    function isPointInPolygon(point, polygon) {
-      const [x, y] = point;
-      let inside = false;
-      for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-        const [xi, yi] = polygon[i];
-        const [xj, yj] = polygon[j];
-        const intersect =
-          yi > y !== yj > y &&
-          x < ((xj - xi) * (y - yi)) / (yj - yi + 0.0000001) + xi;
-        if (intersect) inside = !inside;
+  <head>
+    <meta charset="UTF-8" />
+    <title>Polygon Inside Check</title>
+    <style>
+      canvas {
+        border: 1px solid #ccc;
+        background-color: #f9f9f9;
       }
-      return inside;
-    }
-
-    // Line segment intersection check
-    function doLinesIntersect(p1, p2, q1, q2) {
-      function ccw(a, b, c) {
-        return (c[1] - a[1]) * (b[0] - a[0]) > (b[1] - a[1]) * (c[0] - a[0]);
+      #status {
+        font-family: sans-serif;
+        margin-top: 10px;
       }
-      return (
-        ccw(p1, q1, q2) !== ccw(p2, q1, q2) &&
-        ccw(p1, p2, q1) !== ccw(p1, p2, q2)
-      );
-    }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas" width="600" height="600"></canvas>
+    <div id="status"></div>
 
-    // Main check
-    function isPolygonInside(polygonA, polygonB) {
-      // Check all A's points are inside B
-      for (const pt of polygonA) {
-        if (!isPointInPolygon(pt, polygonB)) {
-          return false;
+    <script>
+      const canvas = document.getElementById('canvas')
+      const ctx = canvas.getContext('2d')
+
+      // Define Polygon B (outer)
+      const polygonB = [
+        [100, 100],
+        [500, 100],
+        [500, 500],
+        [100, 500],
+      ]
+
+      // Define Polygon A (inner)
+      const polygonA = [
+        [200, 200],
+        [400, 200],
+        [400, 400],
+        [200, 400],
+      ]
+
+      // Ray casting point-in-polygon
+      function isPointInPolygon(point, polygon) {
+        const [x, y] = point
+        let inside = false
+        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+          const [xi, yi] = polygon[i]
+          const [xj, yj] = polygon[j]
+          const intersect =
+            yi > y !== yj > y &&
+            x < ((xj - xi) * (y - yi)) / (yj - yi + 0.0000001) + xi
+          if (intersect) inside = !inside
         }
+        return inside
       }
-      // Check that no edges intersect
-      for (let i = 0; i < polygonA.length; i++) {
-        const a1 = polygonA[i];
-        const a2 = polygonA[(i + 1) % polygonA.length];
-        for (let j = 0; j < polygonB.length; j++) {
-          const b1 = polygonB[j];
-          const b2 = polygonB[(j + 1) % polygonB.length];
-          if (doLinesIntersect(a1, a2, b1, b2)) {
-            return false;
+
+      // Line segment intersection check
+      function doLinesIntersect(p1, p2, q1, q2) {
+        function ccw(a, b, c) {
+          return (c[1] - a[1]) * (b[0] - a[0]) > (b[1] - a[1]) * (c[0] - a[0])
+        }
+        return (
+          ccw(p1, q1, q2) !== ccw(p2, q1, q2) &&
+          ccw(p1, p2, q1) !== ccw(p1, p2, q2)
+        )
+      }
+
+      // Main check
+      function isPolygonInside(polygonA, polygonB) {
+        // Check all A's points are inside B
+        for (const pt of polygonA) {
+          if (!isPointInPolygon(pt, polygonB)) {
+            return false
           }
         }
+        // Check that no edges intersect
+        for (let i = 0; i < polygonA.length; i++) {
+          const a1 = polygonA[i]
+          const a2 = polygonA[(i + 1) % polygonA.length]
+          for (let j = 0; j < polygonB.length; j++) {
+            const b1 = polygonB[j]
+            const b2 = polygonB[(j + 1) % polygonB.length]
+            if (doLinesIntersect(a1, a2, b1, b2)) {
+              return false
+            }
+          }
+        }
+        return true
       }
-      return true;
-    }
 
-    // Draw polygon
-    function drawPolygon(polygon, color, fill = false) {
-      ctx.beginPath();
-      ctx.moveTo(polygon[0][0], polygon[0][1]);
-      for (let i = 1; i < polygon.length; i++) {
-        ctx.lineTo(polygon[i][0], polygon[i][1]);
+      // Draw polygon
+      function drawPolygon(polygon, color, fill = false) {
+        ctx.beginPath()
+        ctx.moveTo(polygon[0][0], polygon[0][1])
+        for (let i = 1; i < polygon.length; i++) {
+          ctx.lineTo(polygon[i][0], polygon[i][1])
+        }
+        ctx.closePath()
+        ctx.strokeStyle = color
+        ctx.lineWidth = 2
+        ctx.stroke()
+        if (fill) {
+          ctx.fillStyle = color + '55'
+          ctx.fill()
+        }
       }
-      ctx.closePath();
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      if (fill) {
-        ctx.fillStyle = color + "55";
-        ctx.fill();
-      }
-    }
 
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-    // Check and draw
-    const inside = isPolygonInside(polygonA, polygonB);
+      // Check and draw
+      const inside = isPolygonInside(polygonA, polygonB)
 
-    drawPolygon(polygonB, "#555", true); // Outer polygon
-    drawPolygon(polygonA, inside ? "green" : "red", true); // Inner polygon
+      drawPolygon(polygonB, '#555', true) // Outer polygon
+      drawPolygon(polygonA, inside ? 'green' : 'red', true) // Inner polygon
 
-    // Update status
-    document.getElementById("status").innerText = inside
-      ? "✅ Polygon A is strictly inside Polygon B"
-      : "❌ Polygon A is NOT strictly inside Polygon B";
-  </script>
-</body>
+      // Update status
+      document.getElementById('status').innerText = inside
+        ? '✅ Polygon A is strictly inside Polygon B'
+        : '❌ Polygon A is NOT strictly inside Polygon B'
+    </script>
+  </body>
 </html>

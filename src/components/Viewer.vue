@@ -1,70 +1,227 @@
 <template>
-  <v-container class="fill-height" max-width="900">
+  <v-container class="fill-height">
+    <div class="svg-container">
+      <svg
+        @click="svgClicked($event)"
+        class="text-svg"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        :viewBox="`0 0 ${svgWidth} ${svgHeight}`"
+        preserveAspectRatio="xMidYMid meet"
+      >
+        <g v-html="textSvg"></g>
 
-    <div class="svg-container" v-html="svgHtml" />
+        <g v-html="frameSvg"></g>
 
-    <p class="test">hello world</p>
-
+        <g v-html="svgScaleHtml" stroke-width="1" :stroke="scaleColor"></g>
+      </svg>
+    </div>
   </v-container>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 
-  import { ref } from 'vue'
-
-  import { Vector } from '../helpers/vector-helper'
+import { VectorFrame, VectorText } from '../helpers/vector-helper'
 import { useAppStore } from '../stores/app'
 
-  let app = useAppStore()
+let app = useAppStore()
 
-  let svgHtml = ref()
+let frameSvg = ref()
+let textSvg = ref()
 
-  const { text, font, fontSize } = storeToRefs(app)
+let svgScaleHtml = ref()
 
-  watch(text, () => {
+const { text, font, textWidth, frameWidth, frameHeight, framePadding, manualFrameSize } = storeToRefs(app)
+
+const svgWidth = ref(0)
+const svgHeight = ref(0)
+
+const scaleColor = ref('#AAAAAA')
+
+function svgClicked(event){
+
+  const svgLine = event.target?.dataset?.part;
+
+  console.log(svgLine, event);
+
+}
+watch(
+  text,
+  () => {
     render()
-  }, { immediate: true })
+  },
+  { immediate: true },
+)
 
-  watch(font, () => {
+watch(
+  font,
+  () => {
     render()
-  }, { immediate: true })
+  },
+  { immediate: true },
+)
 
-
-  watch(fontSize, () => {
+watch(
+  textWidth,
+  async () => {
     render()
-  }, { immediate: true })
+  },
+  { immediate: true },
+)
 
-  function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+watch(
+  frameHeight,
+  async () => {
+    render()
+  },
+  { immediate: true },
+)
+
+watch(
+  frameWidth,
+  async () => {
+    render()
+  },
+  { immediate: true },
+)
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-  async function render () {
-    const color = '#FFFFFF'
+const svgPadding = 20
 
-    let svg = ['<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  width="800"  height="200" >']
+async function render() {
+  const vector = new VectorText(text.value, {
+    font: font.value,
+    textWidth:textWidth.value,
 
-    const vector = new Vector(text.value, { font: font.value, fontSize :fontSize.value })
-
-
-    for (const line of vector.polyline) {
-
-      svg.push(`<line x1="${line.start.x}" y1="${line.start.y}" x2="${line.end.x}" y2="${line.end.y}" stroke-width="1" stroke="${color}" />`)
-
-      svgHtml.value = svg.join('')+'</svg>'
-    }
+    padding:framePadding.value
+  })
 
 
+  // render scale
 
+  textSvg = vector.renderSvg();
+
+  let width,height;
+
+  if(manualFrameSize.value){
+
+    height=frameHeight.value;
+    width=frameWidth.value;
+
+  } else {
+    height = vector.parseHeight();
+    width = vector.parseWidth();
   }
 
+
+
+  const vectorFrame = new VectorFrame({
+    width,
+    height
+  })
+
+  frameSvg = vectorFrame.renderSvg();
+
+
+
+
+
+  const vectorWidth =  Math.max(vector.parseWidth(), vectorFrame.parseWidth());
+  const vectorHeight = Math.max(vector.parseHeight(), vectorFrame.parseHeight());
+
+
+
+
+  renderScale(vectorWidth, vectorHeight)
+
+
+  svgWidth.value =  vectorWidth
+  svgHeight.value = vectorHeight
+
+
+
+
+}
+
+
+
+
+function renderScale(vectorWidth, vectorHeight) {
+  let svgScale = []
+
+  const scaleWidth = 10
+  const scalePadding = 3
+
+  const scaleStartX = vectorWidth - scaleWidth
+  const scaleEndX = vectorWidth
+
+  const scaleY = vectorHeight + scalePadding + svgPadding
+
+  const scaleVerticalBar = 1
+
+  svgScale.push(
+    `<line x1="${scaleStartX}" y1="${scaleY}" x2="${scaleEndX}" y2="${scaleY}" />`,
+  )
+
+  svgScale.push(
+    `<line x1="${scaleStartX}" y1="${scaleY - scaleVerticalBar}" x2="${scaleStartX}" y2="${scaleY + scaleVerticalBar}" />`,
+  )
+
+  svgScale.push(
+    `<line x1="${scaleEndX}" y1="${scaleY - scaleVerticalBar}" x2="${scaleEndX}" y2="${scaleY + scaleVerticalBar}"  />`,
+  )
+
+  svgScale.push(`
+        <text font-size="2" x="${scaleStartX}" y="${scaleY + scaleVerticalBar * 2 + scalePadding}" text-anchor="right">0</text>
+        <text font-size="2" x="${scaleEndX}" y="${scaleY + scaleVerticalBar * 2 + scalePadding}"  text-anchor="end">1cm</text>`)
+
+  svgScaleHtml.value = svgScale.join('')
+}
 </script>
 
 <style>
-.svg-container{
+.svg-container {
   /*background-color: gray;*/
+
+  width: 100%;
+
+  height: 100%;
+  position: relative;
+
+  .text-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    width: 100%;
+
+    height: 100%;
+
+    overflow: visible;
+  }
+
+  .scale-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    width: 100%;
+
+    height: 100%;
+
+    overflow: visible;
+  }
 }
 
-.test{
+.test {
   font-family: 'pacifico';
+}
+
+svg * {
+  vector-effect: non-scaling-stroke;
 }
 </style>

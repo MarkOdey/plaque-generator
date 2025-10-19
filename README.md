@@ -2,8 +2,6 @@
 
 Little SPA for generating vectorized text for GCODE or other CNC machine
 
-
-
 ## 💿 Install
 
 - Install nvm inorder to make sure you are using the proper node version.
@@ -11,7 +9,6 @@ Little SPA for generating vectorized text for GCODE or other CNC machine
 - Then run `npm i`
 
 ## 💡 Usage
-
 
 ### Starting the Development Server
 
@@ -52,6 +49,7 @@ This project is built with [Vuetify](https://vuetifyjs.com/en/), a UI Library wi
 - [Making a one-time donation with Paypal](https://paypal.me/vuetify)
 
 ## 📑 License
+
 [MIT](http://opensource.org/licenses/MIT)
 
 Copyright (c) 2016-present Vuetify, LLC

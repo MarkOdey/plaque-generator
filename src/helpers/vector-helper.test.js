@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 
-import { Line, Point, Vector } from './vector-helper'
+import { Line, Point, Shape, VectorText } from './vector-helper'
 
 vi.mock('vectorize-text', () => ({
   default: vi.fn(() => {
@@ -111,13 +111,13 @@ vi.mock('vectorize-text', () => ({
 
 import vectorizeText from 'vectorize-text'
 
-describe('Vector', () => {
+describe('VectorText', () => {
   beforeEach(() => {
     vi.clearAllMocks() // optional: resets mock call counts/implementations
   })
 
-  test('Should instantiate Vector', () => {
-    const vector = new Vector('F')
+  test('Should instantiate VectorText', () => {
+    const vector = new VectorText('F')
 
     expect(vector.text).equal('F')
     expect(vector.font).equal('sans-serif')
@@ -125,7 +125,7 @@ describe('Vector', () => {
     expect(vectorizeText).toBeCalled()
   })
 
-  test('Parse Vector', () => {
+  test('Parse VectorText', () => {
     vectorizeText.mockReturnValue({
       edges: [
         [0, 1],
@@ -141,7 +141,7 @@ describe('Vector', () => {
       ],
     })
 
-    const vector = new Vector('F')
+    const vector = new VectorText('F')
 
     expect(vector.lines.length).equal(4)
 
@@ -163,10 +163,13 @@ describe('Vector', () => {
 
       previousLine = line
     })
+
+    expect(vector.width).to.equal(1)
+    expect(vector.height).to.equal(1)
   })
 
   test('Parse Single Closed Letter', () => {
-    const vector = new Vector('F')
+    const vector = new VectorText('F')
 
     vector.lines.forEach((line) => {
       expect(line.start).toBeInstanceOf(Point)
@@ -372,7 +375,7 @@ describe('Vector', () => {
       ],
     })
 
-    const vector = new Vector('o')
+    const vector = new VectorText('o')
 
     let firstLine = null
     let previousLine = null
@@ -431,6 +434,127 @@ describe('Point', () => {
       const point2 = new Point(2, 1)
 
       expect(point1.equal(point2)).to.equal(false)
+    })
+  })
+})
+
+describe('Shape', () => {
+  describe('checkIfPointInside', () => {
+    test('Should pass if the point is inside', () => {
+      const shape = new Shape()
+
+      const p1 = new Point(0, 0)
+      const p2 = new Point(0, 3)
+      const p3 = new Point(3, 3)
+      const p4 = new Point(3, 0)
+
+      shape.addLine(new Line(p1, p2))
+      shape.addLine(new Line(p2, p3))
+      shape.addLine(new Line(p3, p1))
+      shape.addLine(new Line(p4, p2))
+      shape.addLine(new Line(p1, p2))
+
+      const point1 = new Point(1.5, 2.5)
+
+      const res = shape.checkIfPointInside(point1)
+
+      expect(res).to.equal(true)
+    })
+  })
+
+  describe('checkIfShapeInside', () => {
+    test('Should pass if shape is inside', () => {
+      const shapeInside = new Shape()
+
+      const p1 = new Point(1, 1)
+      const p2 = new Point(1, 1.2)
+      const p3 = new Point(1.2, 1.2)
+
+      shapeInside.addLine(new Line(p1, p2))
+      shapeInside.addLine(new Line(p2, p3))
+      shapeInside.addLine(new Line(p3, p1))
+
+      const shapeOutside = new Shape()
+      const p4 = new Point(0, 0)
+      const p5 = new Point(0, 5)
+      const p6 = new Point(5, 5)
+      const p7 = new Point(5, 0)
+
+      shapeOutside.addLine(new Line(p4, p5))
+      shapeOutside.addLine(new Line(p5, p6))
+      shapeOutside.addLine(new Line(p6, p4))
+      shapeOutside.addLine(new Line(p7, p5))
+
+      const res = shapeOutside.checkIfShapeInside(shapeInside)
+
+      expect(res).to.equal(true)
+    })
+  })
+
+  describe('checkIfShapeOverlap', () => {
+    test('Should pass if shape is overlapping', () => {
+      const shapeInside = new Shape()
+
+      const p1 = new Point(1, 1)
+      const p2 = new Point(1, 10)
+      const p3 = new Point(10, 1)
+
+      shapeInside.addLine(new Line(p1, p2))
+      shapeInside.addLine(new Line(p2, p3))
+      shapeInside.addLine(new Line(p3, p1))
+
+      const shapeOutside = new Shape()
+      const p4 = new Point(0, 0)
+      const p5 = new Point(0, 5)
+      const p6 = new Point(5, 5)
+      const p7 = new Point(5, 0)
+
+      shapeOutside.addLine(new Line(p4, p5))
+      shapeOutside.addLine(new Line(p5, p6))
+      shapeOutside.addLine(new Line(p6, p4))
+      shapeOutside.addLine(new Line(p7, p5))
+
+      const res = shapeOutside.checkIfShapeOverlap(shapeInside)
+
+      expect(res).to.equal(true)
+    })
+  })
+
+  describe('getComputedWidth', () => {
+    test('Should get computed width', () => {
+      const shape = new Shape()
+      const p4 = new Point(1, 2)
+      const p5 = new Point(1, 5)
+      const p6 = new Point(5, 5)
+      const p7 = new Point(5, 2)
+
+      shape.addLine(new Line(p4, p5))
+      shape.addLine(new Line(p5, p6))
+      shape.addLine(new Line(p6, p4))
+      shape.addLine(new Line(p7, p5))
+
+      const res = shape.getComputedWidth(shape)
+
+      expect(res).to.equal(4)
+    })
+  })
+
+  describe('getComputedHeight', () => {
+    test('Should get computed height', () => {
+      const shape = new Shape()
+      const p4 = new Point(1, 2)
+      const p5 = new Point(1, 5)
+      const p6 = new Point(5, 5)
+      const p7 = new Point(5, 2)
+
+      shape.addLine(new Line(p4, p5))
+      shape.addLine(new Line(p5, p6))
+      shape.addLine(new Line(p6, p4))
+      shape.addLine(new Line(p7, p5))
+
+      const res = shape.getComputedHeight(shape)
+
+      expect(res).to.equal(3)
     })
   })
 })
