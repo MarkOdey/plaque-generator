@@ -411,6 +411,23 @@ describe('Lines', () => {
       expect(line.end.y).to.equal(1)
     })
   })
+
+  describe('shortenLine', () => {
+    test('Should shorten line from start point', () => {
+      const point1 = new Point(3, 4)
+      const point2 = new Point(0, 0)
+
+      const line = new Line(point1, point2)
+
+      expect(line.getLength()).to.equal(5)
+
+      const shortenedLine = line.shortenLine(3)
+
+      console.log(shortenedLine)
+
+      expect(shortenedLine.getLength()).to.equal(3)
+    })
+  })
 })
 
 describe('Point', () => {
@@ -434,6 +451,22 @@ describe('Point', () => {
       const point2 = new Point(2, 1)
 
       expect(point1.equal(point2)).to.equal(false)
+    })
+  })
+
+  describe('distance', () => {
+    test('Should calculate distance', () => {
+      const point1 = new Point(4, 1)
+      const point2 = new Point(1, 1)
+
+      expect(point1.distance(point2)).to.equal(3)
+    })
+
+    test('Should calculate distance', () => {
+      const point1 = new Point(1, 1)
+      const point2 = new Point(4, 1)
+
+      expect(point1.distance(point2)).to.equal(3)
     })
   })
 })

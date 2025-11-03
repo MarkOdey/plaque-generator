@@ -7,6 +7,12 @@ export const useAppStore = defineStore('app', {
     font: 'pacifico',
     textWidth: 100,
 
+    cutoutRenderings: ['outlined-with-frame'],
+
+    cutoutRendering: 'outlined-with-frame',
+
+    cutoutDiameter: 3,
+
     fontList: ['sans-serif', 'pacifico', 'Caveat Variable'],
 
     frame: 'rectangle',

@@ -1,10 +1,10 @@
 # Plaque Generator
 
-Little SPA for generating vectorized text for GCODE or other CNC machine
+Little SPA for generating vectorized text for CNC routing machine
 
 ## 💿 Install
 
-- Install nvm inorder to make sure you are using the proper node version.
+- Install nvm in order to make sure you are using the proper node version.
 - Once installed `run nvm use` to use the currently node version in order to install and run the platform
 - Then run `npm i`
 

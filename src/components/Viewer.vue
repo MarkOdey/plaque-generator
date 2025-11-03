@@ -32,7 +32,7 @@ let textSvg = ref()
 
 let svgScaleHtml = ref()
 
-const { text, font, textWidth, frameWidth, frameHeight, framePadding, manualFrameSize } = storeToRefs(app)
+const { text, font, textWidth, frameWidth, frameHeight, framePadding, manualFrameSize , cutoutRendering, cutoutDiameter} = storeToRefs(app)
 
 const svgWidth = ref(0)
 const svgHeight = ref(0)
@@ -97,13 +97,18 @@ async function render() {
     font: font.value,
     textWidth:textWidth.value,
 
+    cutoutRendering: cutoutRendering.value,
+    cutoutDiameter:cutoutDiameter.value,
+
     padding:framePadding.value
   })
 
 
   // render scale
 
-  textSvg = vector.renderSvg();
+  // textSvg = vector.renderSvg();
+
+  textSvg = vector.renderCutout();
 
   let width,height;
 

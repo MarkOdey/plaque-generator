@@ -7,6 +7,14 @@
     <v-select v-model="frame" :items="frameList" label="Frame" />
 
 
+    <v-number-input
+        v-model="cutoutDiameter"
+        :reverse="false"
+        controlVariant="default"
+        label="Cutout Diameter"
+        :hideInput="false"
+        :inset="false"
+      ></v-number-input>
 
     <v-checkbox v-model="manualFrameSize" label="Set manually frame size">
     </v-checkbox>
@@ -29,6 +37,8 @@
         :hideInput="false"
         :inset="false"
       ></v-number-input>
+
+
 
     </div>
     <div v-else>
@@ -95,6 +105,6 @@ import { useAppStore } from '../stores/app';
 
 let app = useAppStore()
 
-const { text, fontList, font, textWidth, frame, frameList, framePadding, manualFrameSize, frameHeight, frameWidth, fixtureHole, fixtureHoles, fixtureHolesDiameter, fixtureHolesDistance } =
+const { text, fontList, font, textWidth, frame, frameList, framePadding, manualFrameSize, cutoutDiameter, frameHeight, frameWidth, fixtureHole, fixtureHoles, fixtureHolesDiameter, fixtureHolesDistance } =
   storeToRefs(app)
 </script>

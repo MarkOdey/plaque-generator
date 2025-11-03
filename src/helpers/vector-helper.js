@@ -7,6 +7,9 @@ export class VectorText {
   textWidth = 100
   font = 'sans-serif'
 
+  cutoutRendering = 'raw'
+  cutoutDiameter = 1
+
   paddingY = 0
   paddingX = 0
 
@@ -30,6 +33,14 @@ export class VectorText {
   constructor(text, params = {}) {
     this.text = text
 
+    if (params.cutoutRendering) {
+      this.cutoutRendering = params.cutoutRendering
+    }
+
+    if (params.cutoutDiameter) {
+      this.cutoutDiameter = params.cutoutDiameter
+    }
+
     if (params.font) {
       this.font = params.font
     }
@@ -48,6 +59,8 @@ export class VectorText {
 
       textBaseline: 'hanging',
       // size: this.fontSize,
+
+      size: 200,
       font: this.font,
     })
 
@@ -102,9 +115,10 @@ export class VectorText {
   parsePolyline() {
     const polyline = []
 
-    let shape = new Shape()
-
-    // this.shapes.push(shape)
+    let shape = new Shape({
+      cutoutRendering: this.cutoutRendering,
+      cutoutDiameter: this.cutoutDiameter,
+    })
 
     const parsedLines = 0
 
@@ -117,8 +131,6 @@ export class VectorText {
     const initialLine = this.lines[index]
 
     let currentLine = initialLine
-
-    // polyline.push(currentLine)
 
     shape.addLine(currentLine)
 
@@ -138,15 +150,12 @@ export class VectorText {
         }
 
         if (currentLine.end.equal(line.start)) {
-          //this is next line;
-
           nextLine = line
         }
       })
 
       if (nextLine) {
         currentLine = nextLine
-        // polyline.push(nextLine)
 
         shape.addLine(nextLine)
 
@@ -156,15 +165,16 @@ export class VectorText {
 
         this.shapes.push(shape)
 
-        shape = new Shape()
+        shape = new Shape({
+          cutoutRendering: this.cutoutRendering,
+          cutoutDiameter: this.cutoutDiameter,
+        })
 
         shape.addLine(currentLine)
       }
     }
 
     this.shapes.push(shape)
-
-    // this.polyline = polyline
   }
 
   findLineWithNoShape() {
@@ -207,13 +217,19 @@ export class VectorText {
     for (let i = 0; i < this.shapes.length; i += 1) {
       const shape = this.shapes[i]
 
-      const color = shape.parentShape ? '#00FFFF' : '#FFFF00'
+      svg.push(shape.renderSvg())
+    }
 
-      for (let b = 0; b < shape.polyline.length; b += 1) {
-        const line = shape.polyline[b]
+    return svg.join('')
+  }
 
-        svg.push(line.renderSvg({ color }))
-      }
+  renderCutout() {
+    let svg = []
+
+    for (let i = 0; i < this.shapes.length; i += 1) {
+      const shape = this.shapes[i]
+
+      svg.push(shape.renderCutout())
     }
 
     return svg.join('')
@@ -313,8 +329,40 @@ export class Line {
       this.shape,
     )
   }
-  renderSvg({ color }) {
-    return `<line data-part="${this.id}" x1="${this.start.x}" y1="${this.start.y}" x2="${this.end.x}" y2="${this.end.y}" stroke-width="1" stroke="${color}" />`
+
+  getLength() {
+    return this.start.distance(this.end)
+  }
+
+  computeUnitVector() {
+    const length = this.getLength()
+
+    return new Point(
+      (this.end.x - this.start.x) / length,
+      (this.end.y - this.start.y) / length,
+    )
+  }
+
+  shortenLine(length) {
+    const unitVector = this.computeUnitVector()
+
+    unitVector.multiply(length)
+    unitVector.add(this.start.x, this.start.y)
+
+    return new Line(this.start, unitVector)
+  }
+
+  shortenFromEndLine(length) {
+    const unitVector = this.computeUnitVector()
+
+    unitVector.multiply(-length)
+    unitVector.add(this.end.x, this.end.y)
+
+    return new Line(unitVector, this.end)
+  }
+
+  renderSvg({ color, diameter }) {
+    return `<line data-part="${this.id}" x1="${this.start.x}" y1="${this.start.y}" x2="${this.end.x}" y2="${this.end.y}" stroke-width="${diameter}" stroke="${color}" stroke-linecap="round"  />`
   }
 }
 
@@ -335,17 +383,44 @@ export class Point {
     return [this.x, this.y]
   }
 
+  distance(point) {
+    return Math.sqrt(
+      Math.pow(this.x - point.x, 2) + Math.pow(this.y - point.y, 2),
+    )
+  }
+
+  multiply(z) {
+    this.x = this.x * z
+    this.y = this.y * z
+  }
+
+  add(x, y) {
+    this.x = this.x + x
+    this.y = this.y + y
+  }
+
   addPadding(padding) {
     return new Point(this.x + padding, this.y + padding)
   }
 }
 
 export class Shape {
+  cutoutRendering = 'raw'
+  cutoutDiameter = 1
+
   polyline = []
 
   parentShape
 
-  constructor() {}
+  constructor(params = {}) {
+    if (params.cutoutRendering) {
+      this.cutoutRendering = params.cutoutRendering
+    }
+
+    if (params.cutoutDiameter) {
+      this.cutoutDiameter = params.cutoutDiameter
+    }
+  }
 
   addLine(line) {
     line.shape = this
@@ -435,5 +510,65 @@ export class Shape {
     rawPoints.push(firstPoint)
 
     return rawPoints
+  }
+
+  renderSvg() {
+    let svg = []
+    const color = this.parentShape ? '#00FFFF' : '#FFFF00'
+
+    for (let b = 0; b < this.polyline.length; b += 1) {
+      const line = this.polyline[b]
+
+      svg.push(line.renderSvg({ color }))
+    }
+
+    return svg.join('')
+  }
+
+  renderCutout() {
+    let svg = []
+    const color = '#FF00FF'
+
+    let skipIndex = 0
+    let firstLine = true
+
+    let tabSize = 3
+
+    for (let b = 0; b < this.polyline.length; b += 1) {
+      const line = this.polyline[b]
+
+      const lineLength = line.getLength()
+
+      if (skipIndex === b && lineLength >= tabSize && firstLine) {
+        firstLine = false
+
+        console.log(tabSize, lineLength, 'Bacon rendered')
+
+        //If line is bigger than tab size. Shorten line and render
+        const shortenedLine = line.shortenLine(lineLength - tabSize)
+        svg.push(
+          shortenedLine.renderSvg({ color, diameter: this.cutoutDiameter }),
+        )
+      } else if (skipIndex === b && lineLength >= tabSize && !firstLine) {
+        firstLine = false
+        const shortenedLine = line.shortenFromEndLine(lineLength - tabSize)
+        svg.push(
+          shortenedLine.renderSvg({ color, diameter: this.cutoutDiameter }),
+        )
+      } else if (skipIndex === b) {
+        //If line is smaller than tab size. Dont render; Increment index; Subtract tab by line length
+        firstLine = false
+        skipIndex += 1
+
+        tabSize -= lineLength
+
+        console.log(tabSize, 'Bacon skip')
+        continue
+      } else {
+        svg.push(line.renderSvg({ color, diameter: this.cutoutDiameter }))
+      }
+    }
+
+    return svg.join('')
   }
 }
